@@ -1,0 +1,7 @@
+I need you to create a Low Fantasy Gaming character generator with the ability to select Race and Class and a level of the character, roll stats or distribute manualy with Alternatvie Method. 
+If there's an option to choose, let the player choose (e.g. if spending starting gold, then open the window with "shop", where you can spend all the starting gold to buy stuff. Also roll prices according the tables. Or if the player creates a 3rd level character, then Unique Feature list must show up so the player can choose UF. or choosing skills or class abilities)
+I'll provide you with everything  you need: rules, descriptions and tables. It must be a python app with UI, no web. Just launch the py file on any machine with python and generate a character. 
+Also there should be a save and load character option, in JSON for example. And when loading a character, the player should be able to lvl up, open shops, manage the inventory, gold, description. It should be a fully controllable interactive charactersheet.
+Visuals should be like it is a real low fantasy, conan the barbarian -ish, dungeon synth like aesthetics. 
+Read all the .md files in this directory, so you can understand the game mechanics and rules for creation. If you have any questions before planning out this little python app, ask them. Also there's a png file of a charactersheet. this must be used as base for ui. 
+Firstly plan out this.
