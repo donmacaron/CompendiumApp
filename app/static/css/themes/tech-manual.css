@@ -1,0 +1,27 @@
+/* TECH MANUAL — clean technical theme */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #f8f9fa;
+  --bg-alt: #e9ecef;
+  --text: #212529;
+  --text-muted: #6c757d;
+  --accent: #0066cc;
+  --border: #dee2e6;
+  --font-body: 'IBM Plex Serif', Georgia, serif;
+  --font-heading: 'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font-family: var(--font-body); font-size: 1rem; line-height: 1.7; }
+h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--text);
+                  text-wrap: balance; border-bottom: 1px solid var(--border);
+                  padding-bottom: 4px; }
+p { text-wrap: pretty; margin-bottom: 1em; }
+a { color: var(--accent); }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+th { background: var(--bg-alt); font-family: var(--font-heading); font-size: 0.85em; }
+code { font-family: 'IBM Plex Mono', monospace; background: var(--bg-alt);
+       padding: 2px 6px; font-size: 0.88em; }

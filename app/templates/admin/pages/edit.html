@@ -1,0 +1,447 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{% if is_new %}New Page{% else %}Edit: {{ page.title }}{% endif %} — {{ system.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/editor.css">
+<style>
+/* ── Revision history ── */
+.revision-list { list-style:none; padding:0; margin:0; }
+.revision-item { display:flex; justify-content:space-between; align-items:center;
+                 padding:8px 0; border-bottom:1px solid #ede0b0; gap:12px; flex-wrap:wrap; }
+.revision-item:last-child { border-bottom:none; }
+.revision-meta  { font-size:0.8em; color:#7a5c3a; }
+.revision-title { font-size:0.88em; color:#2c1a0e; flex:1; }
+
+/* ── Media picker modal ── */
+.mpicker-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.5); z-index:1000;
+}
+.mpicker-overlay.open { display:block; }
+
+.mpicker-modal {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:min(820px,95vw); max-height:80vh;
+  background:#fdf6e3; border:1px solid #c4a96b;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+  z-index:1001; display:flex; flex-direction:column;
+  border-radius:4px; overflow:hidden;
+}
+
+.mpicker-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px; border-bottom:1px solid #c4a96b;
+  background:#ede0b0; flex-shrink:0;
+}
+
+.mpicker-header h3 { margin:0; font-family:'Cinzel',serif; font-size:1em; color:#8b2e2e; }
+
+.mpicker-close {
+  background:none; border:none; font-size:1.4em; cursor:pointer;
+  color:#7a5c3a; line-height:1; padding:2px 6px;
+}
+.mpicker-close:hover { color:#8b2e2e; }
+
+.mpicker-tabs { display:flex; border-bottom:1px solid #c4a96b; flex-shrink:0; }
+.mpicker-tab {
+  padding:9px 18px; border:none; background:none; cursor:pointer;
+  font-size:0.88em; color:#7a5c3a; border-bottom:2px solid transparent;
+  margin-bottom:-1px; font-family:inherit;
+}
+.mpicker-tab.active { color:#8b2e2e; border-bottom-color:#8b2e2e; font-weight:600; }
+
+.mpicker-body { flex:1; overflow-y:auto; padding:18px; }
+
+/* Image grid */
+.picker-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+  gap:10px;
+}
+
+.picker-thumb {
+  cursor:pointer; border:2px solid transparent;
+  border-radius:3px; overflow:hidden;
+  background:#fff8e7; transition:border-color 0.15s, transform 0.12s;
+}
+.picker-thumb:hover { border-color:#8b2e2e; transform:scale(1.02); }
+.picker-thumb img { width:100%; height:90px; object-fit:cover; display:block; background:#ede0b0; }
+.picker-thumb-name { padding:4px 6px; font-size:0.7em; color:#7a5c3a;
+                     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Upload tab */
+.mpicker-upload-zone {
+  border:2px dashed #c4a96b; padding:28px; text-align:center;
+  background:#fff8e7; cursor:pointer; border-radius:3px; transition:border-color 0.2s;
+}
+.mpicker-upload-zone:hover, .mpicker-upload-zone.drag-over { border-color:#8b2e2e; }
+.mpicker-upload-status { margin-top:12px; font-size:0.85em; color:#7a5c3a; min-height:20px; }
+
+.mpicker-footer {
+  padding:10px 18px; border-top:1px solid #c4a96b; background:#ede0b0;
+  font-size:0.8em; color:#7a5c3a; flex-shrink:0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <div>
+    <a href="/admin/pages/{{ system.id }}/"
+       style="font-size:0.85em;color:#7a5c3a;text-decoration:none">
+      ← {{ system.name }} Pages
+    </a>
+    <h1 style="margin-top:4px">
+      {% if is_new %}New Page{% else %}{{ page.title }}{% endif %}
+    </h1>
+  </div>
+  {% if not is_new and page.is_published %}
+  <a href="/s/{{ system.slug }}/{{ page.slug }}" target="_blank" class="btn btn-ghost">View ↗</a>
+  {% endif %}
+</div>
+
+<form method="POST"
+      action="{% if is_new %}/admin/pages/{{ system.id }}/new{% else %}/admin/pages/{{ system.id }}/{{ page.id }}{% endif %}"
+      id="page-form">
+
+  <!-- Title row -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <input type="text" name="title" required
+           value="{{ page.title if page else '' }}"
+           placeholder="Page title…"
+           class="form-input"
+           style="flex:1;min-width:280px;font-size:1.1em;font-weight:600">
+
+    {% if system.translatable %}
+    <select name="language" class="form-input" style="width:170px">
+      {% for code, name in languages %}
+      <option value="{{ code }}"
+              {% if page and page.language == code %}selected
+              {% elif not page and code == 'en' %}selected{% endif %}>
+        {{ code | upper }} — {{ name }}
+      </option>
+      {% endfor %}
+    </select>
+    <button type="button" id="btn-translation" onclick="toggleTranslation()"
+            class="btn btn-ghost btn-sm">
+      {% if translation %}− Hide Translation{% else %}+ Add Translation{% endif %}
+    </button>
+    {% else %}
+    <input type="hidden" name="language" value="en">
+    {% endif %}
+  </div>
+
+  <!-- Editor toolbar extension — media picker button -->
+  <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;align-items:center">
+    <button type="button" class="btn btn-ghost btn-sm"
+            onclick="openMediaPicker('primary')">
+      🖼️ Insert Image
+    </button>
+    {% if system.translatable %}
+    <button type="button" class="btn btn-ghost btn-sm"
+            id="btn-insert-translation"
+            onclick="openMediaPicker('translation')"
+            {% if not translation %}style="display:none"{% endif %}>
+      🖼️ Insert Image (Translation)
+    </button>
+    {% endif %}
+    <span style="font-size:0.78em;color:#7a5c3a">
+      Click image in picker to insert at cursor position
+    </span>
+  </div>
+
+  <!-- Editors row -->
+  <div class="editors-row{% if translation %} dual{% endif %}" id="editors-row">
+    <div class="editor-pane" id="pane-primary">
+      {% if system.translatable %}
+      <div class="pane-label">
+        {{ (page.language | upper) if page and page.language else 'EN' }} — Original
+      </div>
+      {% endif %}
+      <div id="editor-primary"></div>
+      <input type="hidden" name="content" id="primary-content"
+             value="{{ page.content | e if page and page.content else '' }}">
+    </div>
+
+    {% if system.translatable %}
+    <div class="editor-pane" id="pane-translation"
+         style="{% if not translation %}display:none{% endif %}">
+      <div class="pane-label translation-pane-header">
+        <select name="translation_language" class="lang-select">
+          {% for code, name in languages %}
+          <option value="{{ code }}"
+                  {% if translation and translation.language == code %}selected{% endif %}>
+            {{ code | upper }} — {{ name }}
+          </option>
+          {% endfor %}
+        </select>
+        <input type="text" name="translation_title"
+               value="{{ translation.title if translation else '' }}"
+               placeholder="Translated title…"
+               class="translation-title-input">
+      </div>
+      <div id="editor-translation"></div>
+      <input type="hidden" name="translation_content" id="translation-content"
+             value="{{ translation.content | e if translation and translation.content else '' }}">
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Page settings -->
+  <div class="page-settings">
+    <div class="page-settings-row">
+      <div class="form-group" style="flex:1;min-width:200px">
+        <label>Parent Page</label>
+        <select name="parent_id" class="form-input">
+          <option value="">— Top level —</option>
+          {% for p in all_pages %}
+          <option value="{{ p.id }}"
+                  {% if page and page.parent_id == p.id %}selected{% endif %}>
+            {{ p.title }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="flex:2;min-width:200px">
+        <label>Tags</label>
+        <input type="text" name="tags"
+               value="{{ page.tags if page and page.tags else '' }}"
+               placeholder="monsters, rules, spells" class="form-input">
+      </div>
+      <div class="form-group" style="min-width:120px">
+        <label>Visibility</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;
+                      font-weight:normal;padding-top:6px">
+          <input type="checkbox" name="published" value="on"
+                 {% if page and page.is_published %}checked{% endif %}
+                 style="width:16px;height:16px;accent-color:#8b2e2e">
+          Published
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions" style="margin-top:20px">
+    <button type="submit" class="btn btn-primary">💾 Save Page</button>
+    {% if not is_new %}
+    <form method="POST"
+          action="/admin/pages/{{ system.id }}/{{ page.id }}/publish"
+          style="display:inline">
+      <button type="submit"
+              class="btn {% if page.is_published %}btn-warning{% else %}btn-success{% endif %}">
+        {% if page.is_published %}Unpublish{% else %}✅ Publish{% endif %}
+      </button>
+    </form>
+    {% endif %}
+    <a href="/admin/pages/{{ system.id }}/" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+
+<!-- Revision History -->
+{% if revisions %}
+<div style="margin-top:40px;border-top:1px solid #c4a96b;padding-top:24px">
+  <h3 style="font-family:'Cinzel',serif;font-size:0.9em;text-transform:uppercase;
+             letter-spacing:1px;color:#7a5c3a;margin-bottom:14px">
+    🕒 Revision History
+  </h3>
+  <ul class="revision-list">
+    {% for rev in revisions %}
+    <li class="revision-item">
+      <span class="revision-title">{{ rev.title }}</span>
+      <span class="revision-meta">{{ rev.created_at.strftime('%d %b %Y, %H:%M') }}</span>
+      <form method="POST"
+            action="/admin/pages/{{ system.id }}/{{ page.id }}/restore/{{ rev.id }}"
+            style="display:inline"
+            onsubmit="return confirm('Restore this revision? Current content will be snapshotted first.')">
+        <button type="submit" class="btn btn-sm btn-ghost">Restore</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<!-- ═══════════════ MEDIA PICKER MODAL ═══════════════ -->
+<div class="mpicker-overlay" id="mpicker-overlay" onclick="closeMediaPicker()"></div>
+<div class="mpicker-modal" id="mpicker-modal">
+  <div class="mpicker-header">
+    <h3>🖼️ Insert Image</h3>
+    <button type="button" class="mpicker-close" onclick="closeMediaPicker()">×</button>
+  </div>
+
+  <div class="mpicker-tabs">
+    <button type="button" class="mpicker-tab active" onclick="switchPickerTab('browse', this)">
+      Browse
+    </button>
+    <button type="button" class="mpicker-tab" onclick="switchPickerTab('upload', this)">
+      Upload New
+    </button>
+  </div>
+
+  <div class="mpicker-body">
+    <!-- Browse tab -->
+    <div id="mpicker-tab-browse">
+      <div class="picker-grid" id="picker-grid">
+        <p style="color:#7a5c3a;font-size:0.9em">Loading…</p>
+      </div>
+    </div>
+
+    <!-- Upload tab -->
+    <div id="mpicker-tab-upload" style="display:none">
+      <div class="mpicker-upload-zone" id="mpicker-drop-zone">
+        <p style="margin:0 0 12px;color:#7a5c3a">
+          Drag & drop an image here, or click to choose
+        </p>
+        <input type="file" id="mpicker-file-input" accept="image/*"
+               style="display:none">
+        <button type="button" class="btn btn-primary btn-sm"
+                onclick="document.getElementById('mpicker-file-input').click()">
+          Choose File
+        </button>
+      </div>
+      <div class="mpicker-upload-status" id="mpicker-upload-status"></div>
+    </div>
+  </div>
+
+  <div class="mpicker-footer">
+    Click any image to insert it at the cursor position in the editor.
+    Uploads go to this system's media library.
+  </div>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+const SYSTEM_ID = {{ system.id }};
+let primaryEditor = null;
+let translationEditor = null;
+let activeEditorTarget = 'primary'; // which editor the picker inserts into
+
+const CK_CONFIG = {
+  toolbar: {
+    items: ['heading','|','bold','italic','underline','|',
+            'link','insertTable','|','bulletedList','numberedList','|',
+            'blockQuote','codeBlock','|','horizontalLine','|','undo','redo']
+  },
+  table: { contentToolbar: ['tableColumn','tableRow','mergeTableCells'] }
+};
+
+// ── Init editors ──────────────────────────────────────────────────────────────
+ClassicEditor.create(document.getElementById('editor-primary'), {
+  ...CK_CONFIG,
+  initialData: document.getElementById('primary-content').value
+}).then(ed => { primaryEditor = ed; }).catch(console.error);
+
+{% if translation %}initTranslationEditor();{% endif %}
+
+function initTranslationEditor() {
+  if (translationEditor) return;
+  ClassicEditor.create(document.getElementById('editor-translation'), {
+    ...CK_CONFIG,
+    initialData: document.getElementById('translation-content').value
+  }).then(ed => { translationEditor = ed; }).catch(console.error);
+}
+
+function toggleTranslation() {
+  const pane = document.getElementById('pane-translation');
+  const row  = document.getElementById('editors-row');
+  const btn  = document.getElementById('btn-translation');
+  const iBtn = document.getElementById('btn-insert-translation');
+  if (!pane) return;
+  const hidden = pane.style.display === 'none';
+  pane.style.display = hidden ? 'flex' : 'none';
+  row.classList.toggle('dual', hidden);
+  btn.textContent  = hidden ? '− Hide Translation' : '+ Add Translation';
+  if (iBtn) iBtn.style.display = hidden ? 'inline-block' : 'none';
+  if (hidden) initTranslationEditor();
+}
+
+// Sync on submit
+document.getElementById('page-form').addEventListener('submit', () => {
+  if (primaryEditor)
+    document.getElementById('primary-content').value = primaryEditor.getData();
+  if (translationEditor)
+    document.getElementById('translation-content').value = translationEditor.getData();
+});
+
+// ── Media picker ──────────────────────────────────────────────────────────────
+function openMediaPicker(target) {
+  activeEditorTarget = target;
+  document.getElementById('mpicker-overlay').classList.add('open');
+  document.getElementById('mpicker-modal').style.display = 'flex';
+  loadPickerGrid();
+}
+
+function closeMediaPicker() {
+  document.getElementById('mpicker-overlay').classList.remove('open');
+  document.getElementById('mpicker-modal').style.display = 'none';
+}
+
+async function loadPickerGrid() {
+  const grid = document.getElementById('picker-grid');
+  grid.innerHTML = '<p style="color:#7a5c3a;font-size:0.9em;padding:12px">Loading…</p>';
+  try {
+    const r = await fetch(`/api/media/picker?system_id=${SYSTEM_ID}`);
+    grid.innerHTML = await r.text();
+  } catch(e) {
+    grid.innerHTML = '<p style="color:#8b2e2e">Failed to load images.</p>';
+  }
+}
+
+function insertMediaUrl(url, alt) {
+  const ed = activeEditorTarget === 'translation' ? translationEditor : primaryEditor;
+  if (!ed) { alert('Editor not ready.'); return; }
+  ed.model.change(writer => {
+    const imageElement = writer.createElement('imageBlock', { src: url, alt: alt || '' });
+    ed.model.insertContent(imageElement, ed.model.document.selection);
+  });
+  closeMediaPicker();
+}
+
+function switchPickerTab(tab, btn) {
+  document.querySelectorAll('.mpicker-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mpicker-tab-browse').style.display = tab === 'browse' ? 'block' : 'none';
+  document.getElementById('mpicker-tab-upload').style.display = tab === 'upload' ? 'block' : 'none';
+  if (tab === 'browse') loadPickerGrid();
+}
+
+// Upload from picker
+const mpickerInput = document.getElementById('mpicker-file-input');
+const mpickerStatus = document.getElementById('mpicker-upload-status');
+const mpickerDrop = document.getElementById('mpicker-drop-zone');
+
+async function uploadToPicker(file) {
+  mpickerStatus.textContent = `Uploading ${file.name}…`;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('system_id', SYSTEM_ID);
+  try {
+    const r = await fetch('/api/media/upload-inline', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (data.error) {
+      mpickerStatus.textContent = '❌ ' + data.error;
+    } else {
+      mpickerStatus.textContent = `✅ ${file.name} uploaded. Click Browse to use it.`;
+      // Auto-insert after upload
+      insertMediaUrl(data.url, data.filename);
+    }
+  } catch(e) {
+    mpickerStatus.textContent = '❌ Upload failed: ' + e;
+  }
+}
+
+mpickerInput.addEventListener('change', () => {
+  [...mpickerInput.files].forEach(uploadToPicker);
+  mpickerInput.value = '';
+});
+
+mpickerDrop.addEventListener('dragover', e => { e.preventDefault(); mpickerDrop.classList.add('drag-over'); });
+mpickerDrop.addEventListener('dragleave', () => mpickerDrop.classList.remove('drag-over'));
+mpickerDrop.addEventListener('drop', e => {
+  e.preventDefault(); mpickerDrop.classList.remove('drag-over');
+  [...e.dataTransfer.files].forEach(uploadToPicker);
+});
+</script>
+{% endblock %}

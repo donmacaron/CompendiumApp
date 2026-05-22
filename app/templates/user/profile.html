@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ current_user.display_name or current_user.username }} — Profile{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/user.css">
+{% endblock %}
+
+{% block content %}
+<div class="user-page">
+
+  <div class="user-header">
+    <div class="user-avatar">
+      {{ (current_user.display_name or current_user.username)[0] | upper }}
+    </div>
+    <div class="user-info">
+      <h1>{{ current_user.display_name or current_user.username }}</h1>
+      <p class="user-meta">
+        Member since {{ current_user.created_at.strftime('%B %Y') }}
+        &nbsp;·&nbsp;
+        <a href="/user/favorites">{{ fav_pages | length }} favorite{% if fav_pages | length != 1 %}s{% endif %}</a>
+      </p>
+    </div>
+  </div>
+
+  {% if fav_pages %}
+  <section class="user-section">
+    <h2>⭐ Saved Pages</h2>
+    <ul class="page-list">
+      {% for item in fav_pages[:5] %}
+      <li class="page-list-item">
+        <a href="/s/{{ item.system.slug }}/{{ item.page.slug }}">{{ item.page.title }}</a>
+        <span class="page-list-system">{{ item.system.name }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if fav_pages | length > 5 %}
+    <a href="/user/favorites" class="user-see-all">See all {{ fav_pages | length }} saved pages →</a>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if history %}
+  <section class="user-section">
+    <h2>📖 Recently Viewed</h2>
+    <ul class="page-list">
+      {% for item in history[:10] %}
+      <li class="page-list-item">
+        <a href="/s/{{ item.system.slug }}/{{ item.page.slug }}">{{ item.page.title }}</a>
+        <span class="page-list-system">{{ item.system.name }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if not fav_pages and not history %}
+  <div class="user-empty">
+    <p>Nothing here yet. Start reading and saving pages.</p>
+    <a href="/" class="btn-link">Browse systems →</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

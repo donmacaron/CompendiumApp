@@ -1,0 +1,85 @@
+/* Global reset and shared typography */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; padding: 0; }
+
+/* Public site nav only — scoped to .site-nav, NOT bare nav */
+.site-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 2px solid var(--border, #c4a96b);
+  background: var(--bg-alt, #ede0b0);
+  font-family: var(--font-heading, 'Cinzel', serif);
+}
+
+.site-nav .nav-brand {
+  color: var(--accent, #8b2e2e);
+  text-decoration: none;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.site-nav .nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.site-nav .nav-links a {
+  color: var(--text, #2c1a0e);
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.site-nav .nav-links a:hover {
+  color: var(--accent, #8b2e2e);
+}
+
+/* ── Print styles ── */
+@media print {
+  .page-sidebar,
+  .site-nav,
+  .fav-btn,
+  .lang-switcher,
+  .page-meta-footer a,
+  .export-link,
+  #search-overlay,
+  #search-modal { display: none !important; }
+
+  .page-layout {
+    display: block !important;
+  }
+
+  .page-content {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: Georgia, serif !important;
+    font-size: 11pt !important;
+  }
+
+  h1, h2, h3, h4 {
+    color: #000 !important;
+    font-family: 'Times New Roman', serif !important;
+    page-break-after: avoid;
+  }
+
+  a { color: #000 !important; text-decoration: underline; }
+
+  .ck-content table { border-collapse: collapse; width: 100%; }
+  .ck-content th, .ck-content td {
+    border: 1px solid #000 !important;
+    padding: 4px 8px;
+  }
+
+  .page-breadcrumb { font-size: 9pt; color: #666; }
+
+  img { max-width: 100% !important; page-break-inside: avoid; }
+
+  p { orphans: 3; widows: 3; }
+}

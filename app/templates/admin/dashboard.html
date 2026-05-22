@@ -1,0 +1,78 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <h1>Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-number">{{ stats.systems_total }}</span>
+    <div class="stat-label">Systems</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">{{ stats.systems_published }}</span>
+    <div class="stat-label">Published</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">{{ stats.pages_total }}</span>
+    <div class="stat-label">Pages</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">{{ stats.pages_published }}</span>
+    <div class="stat-label">Live</div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">{{ stats.users_total }}</span>
+    <div class="stat-label">Users</div>
+  </div>
+</div>
+
+<div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px">
+  <a href="/admin/systems/" class="btn btn-primary">📚 Systems</a>
+  <a href="/admin/systems/create" class="btn btn-secondary">+ New System</a>
+  <a href="/admin/media/" class="btn btn-ghost">🖼️ Media</a>
+  <a href="/" target="_blank" class="btn btn-ghost">🌐 View Site</a>
+</div>
+
+{% if recent %}
+<h2 style="font-family:'Cinzel',serif;font-size:0.9em;text-transform:uppercase;
+           letter-spacing:1px;color:#7a5c3a;margin-bottom:12px">Recently Edited Pages</h2>
+<table style="width:100%;border-collapse:collapse">
+  <thead>
+    <tr style="background:#ede0b0;border-bottom:2px solid #c4a96b">
+      <th style="padding:8px 14px;text-align:left;font-size:0.82em">Page</th>
+      <th style="padding:8px 14px;text-align:left;font-size:0.82em">System</th>
+      <th style="padding:8px 14px;text-align:left;font-size:0.82em">Status</th>
+      <th style="padding:8px 14px;text-align:left;font-size:0.82em">Updated</th>
+      <th style="padding:8px 14px"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in recent %}
+  <tr style="border-bottom:1px solid #ede0b0">
+    <td style="padding:8px 14px;font-size:0.9em">{{ item.page.title }}</td>
+    <td style="padding:8px 14px;font-size:0.82em;color:#7a5c3a">
+      {% if item.system %}{{ item.system.name }}{% endif %}
+    </td>
+    <td style="padding:8px 14px">
+      <span class="badge {% if item.page.is_published %}badge-green{% else %}badge-grey{% endif %}">
+        {% if item.page.is_published %}Live{% else %}Draft{% endif %}
+      </span>
+    </td>
+    <td style="padding:8px 14px;font-size:0.82em;color:#7a5c3a">
+      {{ item.page.updated_at.strftime('%d %b, %H:%M') }}
+    </td>
+    <td style="padding:8px 14px">
+      {% if item.system %}
+      <a href="/admin/pages/{{ item.system.id }}/{{ item.page.id }}"
+         class="btn btn-sm btn-ghost">Edit</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

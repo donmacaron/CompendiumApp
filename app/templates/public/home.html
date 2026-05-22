@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Compendium — All Systems{% endblock %}
+{% block content %}
+<div style="max-width:1000px;margin:60px auto;padding:0 24px">
+  <h1 style="font-family:var(--font-heading,'Cinzel',serif);color:var(--accent,#8b2e2e);
+             margin-bottom:8px;font-size:2.2em">The Compendium</h1>
+  <p style="color:var(--text-muted,#7a5c3a);margin-bottom:36px;font-size:1.05em">
+    A reference library for tabletop roleplaying systems.
+  </p>
+
+  {% if systems %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
+    {% for s in systems %}
+    <a href="/s/{{ s.slug }}"
+       style="display:block;padding:22px;
+              border:1px solid var(--border,#c4a96b);
+              background:var(--bg-alt,#ede0b0);
+              text-decoration:none;color:inherit;
+              transition:box-shadow 0.2s">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <h2 style="margin:0;font-family:var(--font-heading,'Cinzel',serif);
+                   font-size:1.1em;color:var(--accent,#8b2e2e)">{{ s.name }}</h2>
+        {% if s.abbreviation %}
+        <code style="font-size:0.75em;color:var(--text-muted,#7a5c3a);
+                     background:rgba(0,0,0,0.07);padding:2px 6px;border-radius:2px">
+          {{ s.abbreviation }}
+        </code>
+        {% endif %}
+      </div>
+      {% if s.description %}
+      <p style="margin:0;font-size:0.9em;color:var(--text-muted,#7a5c3a);line-height:1.5">
+        {{ s.description[:140] }}{% if s.description|length > 140 %}…{% endif %}
+      </p>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:80px 20px;color:var(--text-muted,#7a5c3a)">
+    <p style="font-size:1.2em;margin-bottom:16px">No systems published yet.</p>
+    {% if current_user and (current_user.role.value == 'admin' or current_user.role == 'admin') %}
+    <a href="/admin/systems/create"
+       style="display:inline-block;padding:10px 24px;
+              background:var(--accent,#8b2e2e);color:#fff;
+              text-decoration:none;font-family:var(--font-heading,'Cinzel',serif)">
+      Create First System →
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

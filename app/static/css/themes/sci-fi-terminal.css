@@ -1,0 +1,27 @@
+/* SCI-FI TERMINAL — green-on-black CRT theme */
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg: #000000;
+  --bg-alt: #0a0a0a;
+  --text: #33ff33;
+  --text-muted: #226622;
+  --accent: #00ff88;
+  --border: #1a4d1a;
+  --font-body: 'Share Tech Mono', 'Courier New', monospace;
+  --font-heading: 'VT323', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font-family: var(--font-body); font-size: 0.95rem; line-height: 1.6;
+       text-shadow: 0 0 8px rgba(51,255,51,0.5); }
+h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--accent);
+                  font-size: 1.8em; letter-spacing: 2px; text-wrap: balance;
+                  text-shadow: 0 0 12px var(--accent); }
+p { text-wrap: pretty; margin-bottom: 1em; }
+a { color: var(--accent); text-shadow: 0 0 6px var(--accent); }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
+th { color: var(--accent); }
+code { font-family: var(--font-body); color: #ffff00; }

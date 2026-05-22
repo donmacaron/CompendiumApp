@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Search{% if q %}: {{ q }}{% endif %} — Compendium{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/search.css">
+{% endblock %}
+
+{% block content %}
+<div class="search-page">
+
+  <h1 class="search-page-title">Search</h1>
+
+  <form method="GET" action="/search" class="search-page-form">
+    <div class="search-page-row">
+      <input type="text" name="q" value="{{ q }}"
+             placeholder="Search all pages…"
+             class="search-page-input" autofocus>
+      <select name="system" class="search-page-select">
+        <option value="">All systems</option>
+        {% for s in systems %}
+        <option value="{{ s.slug }}" {% if system == s.slug %}selected{% endif %}>
+          {{ s.name }}
+        </option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="search-page-btn">Search</button>
+    </div>
+  </form>
+
+  {% if q %}
+  <p class="search-page-count">
+    {% if count > 0 %}
+      {{ count }} result{% if count != 1 %}s{% endif %} for <strong>{{ q }}</strong>
+      {% if system %} in <strong>{{ system }}</strong>{% endif %}
+    {% else %}
+      No results for <strong>{{ q }}</strong>
+    {% endif %}
+  </p>
+  {% endif %}
+
+  {% if results %}
+  <div class="search-results-list">
+    {% for r in results %}
+    <a href="/s/{{ r.system.slug }}/{{ r.page.slug }}" class="search-result-card">
+      <div class="search-result-card-header">
+        <span class="search-result-card-title">{{ r.page.title }}</span>
+        <span class="search-result-card-system">{{ r.system.name }}</span>
+      </div>
+      {% if r.snippet %}
+      <div class="search-result-card-snippet">{{ r.snippet | safe }}</div>
+      {% endif %}
+      {% if r.page.tags %}
+      <div class="search-result-card-tags">
+        {% for tag in r.page.tags.split(',')[:4] %}
+        <span class="page-tag" style="font-size:0.75em">{{ tag.strip() }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% elif q %}
+  <div class="search-empty">
+    <p>No pages found matching <strong>{{ q }}</strong>.</p>
+    <p style="font-size:0.9em;margin-top:8px">Try different keywords or browse a system directly.</p>
+    <a href="/" style="color:var(--accent,#8b2e2e)">← All systems</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

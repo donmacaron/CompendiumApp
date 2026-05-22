@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Compendium{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/base.css">
+  {% if system and system.theme %}
+    <link rel="stylesheet" href="/static/css/themes/{{ system.theme.get('preset', 'low-fantasy') }}.css">
+    {% if system.theme.get('bg_color') or system.theme.get('accent_color') %}
+    <style>
+      :root {
+        {% if system.theme.get('bg_color') %}--bg: {{ system.theme.bg_color }};{% endif %}
+        {% if system.theme.get('text_color') %}--text: {{ system.theme.text_color }};{% endif %}
+        {% if system.theme.get('accent_color') %}--accent: {{ system.theme.accent_color }};{% endif %}
+        {% if system.theme.get('font_body') %}--font-body: '{{ system.theme.font_body }}', Georgia, serif;{% endif %}
+        {% if system.theme.get('font_heading') %}--font-heading: '{{ system.theme.font_heading }}', serif;{% endif %}
+      }
+    </style>
+    {% endif %}
+    {% if system.theme.get('custom_css') %}
+    <style>{{ system.theme.custom_css | safe }}</style>
+    {% endif %}
+  {% else %}
+    <link rel="stylesheet" href="/static/css/themes/low-fantasy.css">
+  {% endif %}
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js" defer></script>
+  <link rel="stylesheet" href="/static/css/search.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- TOP NAV -->
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">⚔ Compendium</a>
+
+    <button class="search-trigger" onclick="openSearch()" title="Search (Ctrl+K)">
+      🔍 <span class="search-trigger-hint">Search <kbd>Ctrl K</kbd></span>
+    </button>
+
+    <div class="nav-links">
+      {% if current_user %}
+        <a href="/user/favorites">☆ Favorites</a>
+        <a href="/user/profile">{{ current_user.display_name or current_user.username }}</a>
+        {% if current_user.role.value == 'admin' or current_user.role == 'admin' %}
+          <a href="/admin/">Admin</a>
+        {% endif %}
+        <a href="/auth/logout">Logout</a>
+      {% else %}
+        <a href="/auth/login">Login</a>
+        <a href="/auth/register">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- SEARCH MODAL -->
+  <div id="search-overlay" class="search-overlay" onclick="closeSearch()"></div>
+  <div id="search-modal" class="search-modal" role="dialog" aria-label="Search">
+    <div class="search-modal-inner">
+      <input
+        id="search-input"
+        type="text"
+        class="search-modal-input"
+        placeholder="Search pages…"
+        autocomplete="off"
+        hx-get="/api/search/"
+        hx-trigger="input changed delay:280ms"
+        hx-target="#search-live-results"
+        hx-include="[name='q']"
+        name="q"
+      >
+      <div id="search-live-results" class="search-live-results"></div>
+      <div class="search-modal-footer">
+        <span>↵ open &nbsp; ESC close &nbsp; <a id="search-full-link" href="/search">See all results</a></span>
+      </div>
+    </div>
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <script>
+    // Ctrl+K / Cmd+K trigger
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape') closeSearch();
+    });
+
+    function openSearch() {
+      document.getElementById('search-overlay').classList.add('active');
+      document.getElementById('search-modal').classList.add('active');
+      const inp = document.getElementById('search-input');
+      inp.value = '';
+      document.getElementById('search-live-results').innerHTML = '';
+      inp.focus();
+    }
+
+    function closeSearch() {
+      document.getElementById('search-overlay').classList.remove('active');
+      document.getElementById('search-modal').classList.remove('active');
+    }
+
+    // Update full-search link as user types
+    document.addEventListener('htmx:afterRequest', () => {
+      const q = document.getElementById('search-input')?.value || '';
+      const link = document.getElementById('search-full-link');
+      if (link) link.href = '/search?q=' + encodeURIComponent(q);
+    });
+
+    // Enter key → full search
+    document.getElementById('search-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = e.target.value.trim();
+        if (q) window.location.href = '/search?q=' + encodeURIComponent(q);
+      }
+    });
+  </script>
+</body>
+</html>

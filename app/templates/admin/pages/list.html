@@ -1,0 +1,121 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Pages — {{ system.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.import-zone {
+  border:2px dashed #c4a96b; padding:18px 20px; background:#fff8e7;
+  margin-bottom:24px; border-radius:3px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.import-zone label { font-size:0.88em; color:#5a3e28; font-weight:600; white-space:nowrap; }
+.import-zone input[type=file] { flex:1; min-width:180px; font-size:0.88em; }
+.import-zone select { padding:6px 10px; border:1px solid #c4a96b; background:#fff8e7;
+                      font-size:0.88em; border-radius:3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <div>
+    <a href="/admin/systems/" style="font-size:0.85em;color:#7a5c3a;text-decoration:none">← Systems</a>
+    <h1 style="margin-top:4px">{{ system.name }} — Pages</h1>
+  </div>
+  <a href="/admin/pages/{{ system.id }}/new" class="btn btn-primary">+ New Page</a>
+</div>
+
+<!-- Import MD -->
+<form method="POST" action="/admin/pages/{{ system.id }}/import-md"
+      enctype="multipart/form-data" class="import-zone">
+  <label>📥 Import .md</label>
+  <input type="file" name="file" accept=".md" required>
+  <select name="language">
+    <option value="en">EN</option>
+    <option value="ru">RU</option>
+    <option value="de">DE</option>
+    <option value="fr">FR</option>
+    <option value="es">ES</option>
+    <option value="pl">PL</option>
+    <option value="zh">ZH</option>
+    <option value="ja">JA</option>
+  </select>
+  <select name="parent_id">
+    <option value="">— Top level —</option>
+    {% for item in flat_pages %}
+    <option value="{{ item.page.id }}">
+      {{ '└ ' * item.level }}{{ item.page.title }}
+    </option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-secondary btn-sm">Import</button>
+  <span style="font-size:0.78em;color:#7a5c3a">
+    First # heading becomes the title. Saves as Draft — opens editor after import.
+  </span>
+</form>
+
+{% if import_error %}
+<div class="flash flash-error" style="background:#f8d7da;color:#721c24;
+     border:1px solid #f5c6cb;padding:12px 16px;margin-bottom:16px;border-radius:3px">
+  ❌ {{ import_error }}
+</div>
+{% endif %}
+
+{% if flat_pages %}
+<table style="width:100%;border-collapse:collapse">
+  <thead>
+    <tr style="background:#ede0b0;border-bottom:2px solid #c4a96b">
+      <th style="padding:10px 14px;text-align:left;font-size:0.85em">Title</th>
+      <th style="padding:10px 14px;text-align:left;font-size:0.85em">Slug</th>
+      <th style="padding:10px 14px;text-align:left;font-size:0.85em">Status</th>
+      <th style="padding:10px 14px;text-align:left;font-size:0.85em">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in flat_pages %}
+  <tr style="border-bottom:1px solid #ede0b0">
+    <td style="padding:10px 14px">
+      <div style="display:flex;align-items:center;padding-left:{{ item.level * 22 }}px;gap:8px">
+        {% if item.level > 0 %}<span style="color:#c4a96b;font-size:0.8em">└</span>{% endif %}
+        <strong>{{ item.page.title }}</strong>
+        {% if system.translatable and item.page.language %}
+        <code style="font-size:0.72em;background:#ede0b0;padding:1px 5px">
+          {{ item.page.language | upper }}
+        </code>
+        {% endif %}
+      </div>
+    </td>
+    <td style="padding:10px 14px;font-size:0.85em;color:#7a5c3a">{{ item.page.slug }}</td>
+    <td style="padding:10px 14px">
+      <span class="badge {% if item.page.is_published %}badge-green{% else %}badge-grey{% endif %}">
+        {% if item.page.is_published %}Published{% else %}Draft{% endif %}
+      </span>
+    </td>
+    <td style="padding:10px 14px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <a href="/admin/pages/{{ system.id }}/{{ item.page.id }}" class="btn btn-sm btn-secondary">Edit</a>
+        <a href="/admin/pages/{{ system.id }}/new?parent_id={{ item.page.id }}" class="btn btn-sm btn-ghost">+ Sub</a>
+        <form method="POST" action="/admin/pages/{{ system.id }}/{{ item.page.id }}/publish" style="display:inline">
+          <button class="btn btn-sm {% if item.page.is_published %}btn-warning{% else %}btn-success{% endif %}">
+            {% if item.page.is_published %}Unpublish{% else %}Publish{% endif %}
+          </button>
+        </form>
+        {% if item.page.is_published %}
+        <a href="/s/{{ system.slug }}/{{ item.page.slug }}" target="_blank" class="btn btn-sm btn-ghost">↗</a>
+        {% endif %}
+        <form method="POST" action="/admin/pages/{{ system.id }}/{{ item.page.id }}/delete" style="display:inline"
+              onsubmit="return confirm('Delete: {{ item.page.title }}?')">
+          <button class="btn btn-sm btn-danger">✕</button>
+        </form>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <p>No pages yet for this system.</p>
+  <a href="/admin/pages/{{ system.id }}/new" class="btn btn-primary">Create first page</a>
+</div>
+{% endif %}
+{% endblock %}

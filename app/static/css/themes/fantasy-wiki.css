@@ -1,0 +1,31 @@
+/* FANTASY WIKI — illuminated manuscript style */
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --bg: #fdf6e3;
+  --bg-alt: #f0e8cc;
+  --text: #3b2a1a;
+  --text-muted: #8b6914;
+  --accent: #8b0000;
+  --border: #c8a84b;
+  --font-body: 'Lora', 'Palatino Linotype', serif;
+  --font-heading: 'MedievalSharp', 'Times New Roman', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font-family: var(--font-body); font-size: 1.05rem; line-height: 1.8; }
+h1 { font-family: var(--font-heading); color: var(--accent); font-size: 2em;
+     text-align: center; border-bottom: 2px solid var(--border);
+     padding-bottom: 8px; text-wrap: balance; }
+h2, h3, h4 { font-family: var(--font-heading); color: var(--text-muted);
+             text-wrap: balance; }
+p { text-wrap: pretty; margin-bottom: 1em; }
+a { color: var(--accent); }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 8px 14px; text-align: left; }
+th { background: var(--bg-alt); font-family: var(--font-heading);
+     color: var(--accent); font-size: 0.9em; }
+blockquote { border-left: 4px solid var(--border); background: var(--bg-alt);
+             margin: 1.5em 0; padding: 0.8em 1.4em; border-radius: 2px; }
+p::first-letter { /* Drop cap on first para */ }

@@ -1,0 +1,281 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Edit {{ system.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.tab-bar { display:flex; gap:4px; border-bottom:2px solid #c4a96b; margin-bottom:28px; }
+.tab-btn { padding:10px 20px; border:none; background:none; cursor:pointer;
+           font-size:1em; color:#7a5c3a; border-bottom:2px solid transparent;
+           margin-bottom:-2px; font-family:inherit; }
+.tab-btn.active { color:#8b2e2e; border-bottom-color:#8b2e2e; font-weight:bold; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+.color-row { display:flex; gap:16px; flex-wrap:wrap; }
+.color-field { display:flex; flex-direction:column; gap:6px; }
+.color-field label { font-size:0.85em; color:#7a5c3a; }
+.color-field input[type=color] { width:60px; height:36px; border:1px solid #c4a96b; padding:2px; cursor:pointer; }
+.tree-root { min-height:80px; padding:8px 0; }
+.tree-list { list-style:none; padding:0; margin:0; }
+.tree-list .tree-list { padding-left:28px; border-left:2px dashed #c4a96b; margin-left:16px; margin-top:4px; }
+.tree-item { margin:4px 0; }
+.tree-node { display:flex; align-items:center; gap:8px; padding:8px 12px;
+             background:#fff8e7; border:1px solid #c4a96b; border-radius:3px;
+             cursor:grab; user-select:none; transition:background 0.12s,border-color 0.12s,box-shadow 0.12s; }
+.tree-node:hover { border-color:#8b2e2e; background:rgba(139,46,46,0.04); }
+.drag-handle { color:#c4a96b; font-size:1em; flex-shrink:0; cursor:grab; }
+.tree-node-title { flex:1; font-size:0.95em; color:#2c1a0e; font-family:'Cinzel',serif; }
+.tree-node-badge { font-size:0.72em; padding:2px 7px; border-radius:3px; flex-shrink:0; }
+.tree-node-pub   { background:#d4edda; color:#1a5c2e; }
+.tree-node-draft { background:#e8e0d0; color:#7a5c3a; }
+.tree-node-link  { font-size:0.78em; color:#8b2e2e; text-decoration:none;
+                   padding:2px 6px; border:1px solid #c4a96b; border-radius:2px; flex-shrink:0; }
+.tree-node-link:hover { background:#8b2e2e; color:#fff; border-color:#8b2e2e; }
+.sortable-ghost  .tree-node { opacity:0.4; border-style:dashed; }
+.sortable-chosen .tree-node { box-shadow:0 4px 16px rgba(139,46,46,0.25); border-color:#8b2e2e; }
+#structure-status { min-height:28px; font-size:0.88em; padding:6px 0; }
+.status-saving { color:#7a5c3a; } .status-saved { color:#1a5c2e; font-weight:600; } .status-error { color:#8b1a1a; }
+.tree-empty { text-align:center; padding:40px 20px; color:#7a5c3a; border:2px dashed #c4a96b; border-radius:4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ====== MACRO must be inside block ====== #}
+{% macro render_node(node, system) %}
+<li class="tree-item" data-id="{{ node.page.id }}" data-parent="{{ node.page.parent_id or '' }}">
+  <div class="tree-node">
+    <span class="drag-handle">⠿</span>
+    <span class="tree-node-title">{{ node.page.title }}</span>
+    {% if node.page.language and system.translatable %}
+    <code style="font-size:0.7em;background:#ede0b0;padding:1px 5px;border-radius:2px">{{ node.page.language | upper }}</code>
+    {% endif %}
+    <span class="tree-node-badge {% if node.page.is_published %}tree-node-pub{% else %}tree-node-draft{% endif %}">
+      {% if node.page.is_published %}Published{% else %}Draft{% endif %}
+    </span>
+    <a href="/admin/pages/{{ system.id }}/{{ node.page.id }}" class="tree-node-link" title="Edit">✏️</a>
+  </div>
+  <ul class="tree-list" data-parent="{{ node.page.id }}">
+    {% for child in node.children %}{{ render_node(child, system) }}{% endfor %}
+  </ul>
+</li>
+{% endmacro %}
+
+<div class="admin-page-header">
+  <div>
+    <h1>{{ system.name }}</h1>
+    <code style="font-size:0.8em;color:#7a5c3a">/s/{{ system.slug }}</code>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/admin/pages/{{ system.id }}/" class="btn btn-ghost">📄 Pages</a>
+    <a href="/s/{{ system.slug }}" target="_blank" class="btn btn-ghost">Preview ↗</a>
+    <a href="/admin/systems/" class="btn btn-ghost">← Systems</a>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button type="button" class="tab-btn active" onclick="switchTab('info',this)">📋 Info</button>
+  <button type="button" class="tab-btn"        onclick="switchTab('theme',this)">🎨 Theme</button>
+  <button type="button" class="tab-btn"        onclick="switchTab('structure',this)">🌲 Structure</button>
+</div>
+
+{# ====== INFO TAB ====== #}
+<div class="tab-panel active" id="tab-info">
+<form method="POST" action="/admin/systems/{{ system.id }}/edit">
+  <div class="form-group">
+    <label>System Name</label>
+    <input type="text" name="name" required value="{{ system.name }}" class="form-input">
+  </div>
+  <div class="form-group">
+    <label>Abbreviation</label>
+    <input type="text" name="abbreviation" value="{{ system.abbreviation or '' }}" maxlength="20" class="form-input" style="max-width:220px">
+  </div>
+  <div class="form-group">
+    <label>Description</label>
+    <textarea name="description" rows="4" class="form-input">{{ system.description or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <label>Translations</label>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:normal">
+      <input type="checkbox" name="translatable" value="on"
+             {% if system.translatable %}checked{% endif %}
+             style="width:18px;height:18px;accent-color:#8b2e2e">
+      <span>Enable page translations for this system</span>
+    </label>
+    <p style="font-size:0.82em;color:#7a5c3a;margin:6px 0 0">When enabled, the page editor shows a side-by-side translation panel.</p>
+  </div>
+  {# preserve theme on info-only save #}
+  <input type="hidden" name="theme_preset"       value="{{ system.theme.get('preset','low-fantasy') }}">
+  <input type="hidden" name="theme_bg_color"     value="{{ system.theme.get('bg_color','#f5e9c8') }}">
+  <input type="hidden" name="theme_text_color"   value="{{ system.theme.get('text_color','#2c1a0e') }}">
+  <input type="hidden" name="theme_accent_color" value="{{ system.theme.get('accent_color','#8b2e2e') }}">
+  <input type="hidden" name="theme_font_body"    value="{{ system.theme.get('font_body','IM Fell English') }}">
+  <input type="hidden" name="theme_font_heading" value="{{ system.theme.get('font_heading','Cinzel') }}">
+  <input type="hidden" name="theme_custom_css"   value="{{ system.theme.get('custom_css','') }}">
+  <div class="form-actions" style="margin-top:24px">
+    <button type="submit" class="btn btn-primary">💾 Save Info</button>
+    <form method="POST" action="/admin/systems/{{ system.id }}/publish" style="display:inline">
+      <button type="submit" class="btn {% if system.is_published %}btn-warning{% else %}btn-success{% endif %}">
+        {% if system.is_published %}Unpublish{% else %}✅ Publish{% endif %}
+      </button>
+    </form>
+  </div>
+</form>
+</div>
+
+{# ====== THEME TAB ====== #}
+<div class="tab-panel" id="tab-theme">
+<form method="POST" action="/admin/systems/{{ system.id }}/edit">
+  <input type="hidden" name="name"         value="{{ system.name }}">
+  <input type="hidden" name="abbreviation" value="{{ system.abbreviation or '' }}">
+  <input type="hidden" name="description"  value="{{ system.description or '' }}">
+  <input type="hidden" name="translatable" value="{% if system.translatable %}on{% endif %}">
+  <div class="form-group">
+    <label>Preset</label>
+    <div class="preset-grid">
+      {% for p in presets %}
+      <label class="preset-option">
+        <input type="radio" name="theme_preset" value="{{ p }}" {% if system.theme.get('preset') == p %}checked{% endif %}>
+        <span class="preset-label preset-{{ p }}">{{ p | replace('-',' ') | title }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Color Overrides</label>
+    <div class="color-row">
+      <div class="color-field"><label>Background</label><input type="color" name="theme_bg_color"     value="{{ system.theme.get('bg_color','#f5e9c8') }}"></div>
+      <div class="color-field"><label>Text</label>      <input type="color" name="theme_text_color"   value="{{ system.theme.get('text_color','#2c1a0e') }}"></div>
+      <div class="color-field"><label>Accent</label>   <input type="color" name="theme_accent_color" value="{{ system.theme.get('accent_color','#8b2e2e') }}"></div>
+    </div>
+  </div>
+  <div class="form-group" style="display:flex;gap:20px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <label>Body Font</label>
+      <select name="theme_font_body" class="form-input">
+        {% for f in fonts %}<option value="{{ f }}" {% if system.theme.get('font_body') == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+      </select>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <label>Heading Font</label>
+      <select name="theme_font_heading" class="form-input">
+        {% for f in fonts %}<option value="{{ f }}" {% if system.theme.get('font_heading') == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Custom CSS</label>
+    <textarea name="theme_custom_css" rows="8" class="form-input" style="font-family:monospace;font-size:0.88em"
+              placeholder="/* override anything */">{{ system.theme.get('custom_css','') }}</textarea>
+  </div>
+  <div class="form-actions" style="margin-top:24px">
+    <button type="submit" class="btn btn-primary">💾 Save Theme</button>
+  </div>
+</form>
+</div>
+
+{# ====== STRUCTURE TAB ====== #}
+<div class="tab-panel" id="tab-structure">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <p style="margin:0;color:#7a5c3a;font-size:0.9em">
+      Drag pages to reorder or nest them. Changes save automatically on drop.
+    </p>
+    <a href="/admin/pages/{{ system.id }}/new" class="btn btn-primary btn-sm">+ New Page</a>
+  </div>
+  <div id="structure-status"></div>
+  {% if pages_tree %}
+  <ul class="tree-list tree-root" id="root-list" data-parent="">
+    {% for node in pages_tree %}{{ render_node(node, system) }}{% endfor %}
+  </ul>
+  {% else %}
+  <div class="tree-empty">
+    <p style="margin-bottom:12px">No pages yet.</p>
+    <a href="/admin/pages/{{ system.id }}/new" class="btn btn-primary">Create first page</a>
+  </div>
+  {% endif %}
+  <p style="margin-top:20px;font-size:0.8em;color:#aaa">
+    Tip: max 5 levels deep. Drag by the ⠿ handle.
+  </p>
+</div>
+
+{# ====== JS — must be inside block ====== #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const SYSTEM_ID = {{ system.id }};
+const STATUS = document.getElementById('structure-status');
+let saveTimer = null;
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setStatus(msg, cls) {
+  STATUS.textContent = msg;
+  STATUS.className = cls;
+}
+
+function collectTree() {
+  const items = [];
+  let order = 0;
+  function walk(listEl, parentId) {
+    listEl.querySelectorAll(':scope > li.tree-item').forEach(li => {
+      const id = parseInt(li.dataset.id);
+      items.push({ id, parent_id: parentId || null, sort_order: order++ });
+      const sub = li.querySelector(':scope > ul.tree-list');
+      if (sub) walk(sub, id);
+    });
+  }
+  const root = document.getElementById('root-list');
+  if (root) walk(root, null);
+  return items;
+}
+
+async function saveTree() {
+  const items = collectTree();
+  setStatus('Saving…', 'status-saving');
+  try {
+    const r = await fetch('/api/pages/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
+    const data = await r.json();
+    if (data.status === 'ok') {
+      setStatus('\u2705 Saved — ' + data.updated + ' pages updated', 'status-saved');
+      setTimeout(() => STATUS.textContent = '', 3000);
+    } else {
+      setStatus('\u274c Save failed', 'status-error');
+    }
+  } catch(e) {
+    setStatus('\u274c Network error: ' + e, 'status-error');
+  }
+}
+
+function initSortable(listEl) {
+  if (listEl._sortable) return;
+  Sortable.create(listEl, {
+    group: { name: 'pages-' + SYSTEM_ID, pull: true,
+      put: (to) => {
+        let depth = 0, el = to.el;
+        while (el && el.id !== 'root-list') { if (el.classList.contains('tree-list')) depth++; el = el.parentElement; }
+        return depth < 5;
+      }
+    },
+    animation: 180, fallbackOnBody: true, swapThreshold: 0.65,
+    ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', dragClass: 'sortable-drag',
+    handle: '.tree-node',
+    onEnd() {
+      document.querySelectorAll('.tree-list').forEach(l => initSortable(l));
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveTree, 600);
+    }
+  });
+  listEl._sortable = true;
+}
+
+document.querySelectorAll('.tree-list').forEach(l => initSortable(l));
+</script>
+
+{% endblock %}

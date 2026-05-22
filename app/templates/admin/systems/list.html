@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Systems{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <h1>Systems</h1>
+  <a href="/admin/systems/create" class="btn btn-primary">+ New System</a>
+</div>
+
+{% if systems %}
+<div class="systems-grid">
+  {% for s in systems %}
+  <div class="system-card">
+    <div class="system-card-header">
+      <div>
+        <h3>{{ s.name }}</h3>
+        {% if s.abbreviation %}<code class="system-abbr">{{ s.abbreviation }}</code>{% endif %}
+      </div>
+      <span class="badge {% if s.is_published %}badge-green{% else %}badge-grey{% endif %}">
+        {% if s.is_published %}Published{% else %}Draft{% endif %}
+      </span>
+    </div>
+    {% if s.description %}
+    <p class="system-desc">{{ s.description[:100] }}{% if s.description|length > 100 %}…{% endif %}</p>
+    {% endif %}
+    <div class="system-card-theme">
+      <span class="theme-dot" style="background:{{ s.theme.get('accent_color', '#8b2e2e') }}"></span>
+      <span class="theme-name">{{ s.theme.get('preset', 'low-fantasy') }}</span>
+      {% if s.translatable %}
+      <span style="margin-left:8px;font-size:0.78em;color:#2d6a2d;background:#d4edda;padding:2px 6px;border-radius:3px">🌐 Translatable</span>
+      {% endif %}
+    </div>
+    <div class="system-card-actions">
+      <a href="/admin/systems/{{ s.id }}/edit" class="btn btn-sm btn-secondary">Edit</a>
+      <a href="/admin/pages/{{ s.id }}/" class="btn btn-sm btn-ghost">📄 Pages</a>
+      <form method="POST" action="/admin/systems/{{ s.id }}/publish" style="display:inline">
+        <button class="btn btn-sm {% if s.is_published %}btn-warning{% else %}btn-success{% endif %}">
+          {% if s.is_published %}Unpublish{% else %}Publish{% endif %}
+        </button>
+      </form>
+      {% if s.is_published %}
+      <a href="/s/{{ s.slug }}" target="_blank" class="btn btn-sm btn-ghost">Preview ↗</a>
+      {% endif %}
+      <form method="POST" action="/admin/systems/{{ s.id }}/delete" style="display:inline"
+            onsubmit="return confirm('Archive {{ s.name }}?')">
+        <button class="btn btn-sm btn-danger">Archive</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No systems yet.</p>
+  <a href="/admin/systems/create" class="btn btn-primary">Create your first system</a>
+</div>
+{% endif %}
+{% endblock %}

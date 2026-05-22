@@ -1,0 +1,102 @@
+.editors-row {
+  display: flex;
+  gap: 0;
+  border: 1px solid #c4a96b;
+  border-radius: 3px;
+  min-height: 420px;
+  background: #fff8e7;
+}
+
+.editors-row.dual .editor-pane {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#pane-translation {
+  border-left: 2px solid #c4a96b;
+  display: flex;
+}
+
+.pane-label {
+  padding: 6px 12px;
+  background: #ede0b0;
+  border-bottom: 1px solid #c4a96b;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: #5a3e28;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.translation-pane-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: #ede0b0;
+  border-bottom: 1px solid #c4a96b;
+}
+
+.lang-select {
+  padding: 4px 8px;
+  border: 1px solid #c4a96b;
+  background: #fff8e7;
+  font-size: 0.85em;
+  border-radius: 3px;
+}
+
+.translation-title-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #c4a96b;
+  background: #fff8e7;
+  font-size: 0.88em;
+  border-radius: 3px;
+  min-width: 120px;
+}
+
+/* CKEditor overrides to fit our theme */
+.ck-editor__editable {
+  min-height: 380px !important;
+  font-family: 'IM Fell English', Georgia, serif !important;
+  font-size: 1.02em !important;
+  background: #fffdf6 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.ck.ck-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e0cfaa !important;
+  background: #f5e9c8 !important;
+  border-radius: 0 !important;
+}
+
+.page-settings {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff8e7;
+  border: 1px solid #c4a96b;
+  border-radius: 3px;
+}
+
+.page-settings-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.page-settings-row .form-group {
+  margin-bottom: 0;
+}

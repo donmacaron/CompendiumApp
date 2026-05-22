@@ -1,0 +1,30 @@
+/* LOW FANTASY — default theme */
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;600&display=swap');
+
+:root {
+  --bg: #f5e9c8;
+  --bg-alt: #ede0b0;
+  --text: #2c1a0e;
+  --text-muted: #7a5c3a;
+  --accent: #8b2e2e;
+  --border: #c4a96b;
+  --font-body: 'IM Fell English', Georgia, serif;
+  --font-heading: 'Cinzel', 'Times New Roman', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font-family: var(--font-body); font-size: 1.05rem; line-height: 1.75; }
+h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--accent);
+                  text-wrap: balance; margin-top: 1.4em; }
+p { text-wrap: pretty; margin-bottom: 1em; }
+a { color: var(--accent); }
+a:hover { opacity: 0.8; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+th { background: var(--bg-alt); font-family: var(--font-heading); font-size: 0.9em; }
+blockquote { border-left: 3px solid var(--border); margin: 1.5em 0;
+             padding: 0.5em 1.2em; color: var(--text-muted); font-style: italic; }
+code { font-family: 'Courier New', monospace; background: var(--bg-alt);
+       padding: 2px 6px; border-radius: 2px; font-size: 0.88em; }

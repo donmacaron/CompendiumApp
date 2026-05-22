@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "partials/sidebar_tree.html" import tree_items %}
+{% block title %}{{ active_title }} — {{ system.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/page.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+
+  <aside class="page-sidebar">
+    <div class="sidebar-system-name">
+      <a href="/s/{{ system.slug }}">{{ system.name }}</a>
+    </div>
+    {{ tree_items(tree, system.slug, page.id) }}
+  </aside>
+
+  <main class="page-content">
+
+    {% if breadcrumb | length > 1 %}
+    <nav class="page-breadcrumb">
+      <a href="/s/{{ system.slug }}">{{ system.name }}</a>
+      {% for crumb in breadcrumb %}
+      <span class="breadcrumb-sep">›</span>
+      {% if loop.last %}
+        <span>{{ crumb.title }}</span>
+      {% else %}
+        <a href="/s/{{ system.slug }}/{{ crumb.slug }}">{{ crumb.title }}</a>
+      {% endif %}
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    <div class="page-title-row">
+      <h1 class="page-title">{{ active_title }}</h1>
+      {% if current_user %}
+        <button
+          hx-post="/api/favorites/toggle/{{ page.id }}"
+          hx-target="this"
+          hx-swap="outerHTML"
+          class="fav-btn {% if is_fav %}fav-btn-active{% endif %}">
+          {% if is_fav %}★ Saved{% else %}☆ Save{% endif %}
+        </button>
+      {% else %}
+        <a href="/auth/login" class="fav-btn">☆ Save</a>
+      {% endif %}
+    </div>
+
+    {% if available_langs | length > 1 %}
+    <div class="lang-switcher">
+      {% for l in available_langs %}
+      <a href="/s/{{ system.slug }}/{{ page.slug }}?lang={{ l.code }}"
+         class="lang-btn {% if l.code == active_lang %}lang-btn-active{% endif %}">
+        {{ l.flag }} {{ l.label }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-body ck-content">
+      {{ active_content | safe if active_content else '<p style="color:var(--text-muted,#7a5c3a)">No content yet.</p>' }}
+    </div>
+
+    {% if page.tags %}
+    <div class="page-tags">
+      {% for tag in page.tags.split(',') %}
+      <span class="page-tag">{{ tag.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-meta-footer">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span>Views: {{ page.view_count }}</span>
+        <a href="/s/{{ system.slug }}/{{ page.slug }}/export.md"
+           class="export-link" title="Download as Markdown">
+          ↓ .md
+        </a>
+        <a href="javascript:window.print()" class="export-link" title="Print / Save as PDF">
+          🖨 Print
+        </a>
+      </div>
+      {% if current_user and (current_user.role.value == 'admin' or current_user.role == 'admin') %}
+      <a href="/admin/pages/{{ system.id }}/{{ page.id }}">Edit →</a>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+{% endblock %}

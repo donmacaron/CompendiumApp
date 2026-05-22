@@ -1,0 +1,12 @@
+{% macro tree_items(nodes, system_slug, current_page_id) %}
+<ul class="sidebar-tree-list">
+  {% for node in nodes %}
+  <li class="sidebar-tree-item{% if node.page.id == current_page_id %} active{% endif %}">
+    <a href="/s/{{ system_slug }}/{{ node.page.slug }}">{{ node.page.title }}</a>
+    {% if node.children %}
+    {{ tree_items(node.children, system_slug, current_page_id) }}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}

@@ -1,0 +1,27 @@
+/* OLD WEB FORUM — late 90s/early 00s forum aesthetic */
+
+:root {
+  --bg: #d4d0c8;
+  --bg-alt: #ece9d8;
+  --text: #000080;
+  --text-muted: #444;
+  --accent: #003366;
+  --border: #808080;
+  --font-body: Verdana, Arial, sans-serif;
+  --font-heading: 'Times New Roman', Times, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: #000;
+       font-family: var(--font-body); font-size: 0.82rem; line-height: 1.5; }
+h1 { font-family: var(--font-heading); color: var(--accent); font-size: 1.4em;
+     border-bottom: 2px inset var(--border); text-wrap: balance; }
+h2 { background: var(--accent); color: #fff; padding: 3px 8px; font-size: 0.95em;
+     font-family: var(--font-body); text-wrap: balance; }
+h3, h4 { font-family: var(--font-body); color: var(--accent); text-wrap: balance; }
+p { text-wrap: pretty; margin-bottom: 0.8em; }
+a { color: #0000ee; }
+a:visited { color: #551a8b; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; font-size: 0.82em; }
+th { background: var(--accent); color: #fff; }
